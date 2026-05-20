@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DatabaseConnection {
     // Constantes com as credenciais do seu banco local
-    private static final String URL = "jdbc:postgresql://localhost:5432/gym_manager";
+    private static final String URL = "jdbc:postgresql://localhost:5432/Gym_Manager";
     private static final String USER = "postgres";
     private static final String PASSWORD = "123"; // senha de acesso do pgAdmin
 

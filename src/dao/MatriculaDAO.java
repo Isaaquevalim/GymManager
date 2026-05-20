@@ -58,4 +58,37 @@ public class MatriculaDAO {
             while (rs.next()) {
                 String cpfAluno = rs.getString("cpf_aluno");
                 // ATENÇÃO EQUIPE: Para isso funcionar 100%, você precisará criar um método 'buscarPorCpf' no AlunoDAO depois!
-                // Al
+                // Aluno aluno = alunoDAO.buscarPorCpf(cpfAluno);
+
+                // Por enquanto, instanciamos um Aluno "vazio" apenas com o CPF para o código compilar
+                Aluno alunoTemp = new Aluno(cpfAluno, "Nome Carregando...", java.time.LocalDate.now());
+
+                Matricula matricula = new Matricula(
+                        rs.getInt("id_matricula"),
+                        alunoTemp, // Passa o objeto aluno associado
+                        rs.getString("tipo_plano"),
+                        rs.getDouble("valor_plano"),
+                        rs.getDate("data_inicio").toLocalDate(),
+                        rs.getDate("data_fim").toLocalDate(),
+                        rs.getString("permissoes")
+                );
+                lista.add(matricula);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Erro ao listar matrículas: " + e.getMessage());
+        } finally {
+            fecharRecursos(conn, stmt, rs);
+        }
+        return lista;
+    }
+
+    private void fecharRecursos(Connection conn, PreparedStatement stmt, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (conn != null) conn.close();
+        } catch (SQLException e) {
+            System.out.println("❌ Erro ao fechar conexão.");
+        }
+    }
+}

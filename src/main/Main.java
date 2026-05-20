@@ -9,12 +9,15 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Locale;
 
 public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int opcaoPrincipal = -1;
+
+        Locale.setDefault(new Locale("pt", "BR"))
 
         // --- INSTANCIANDO TODOS OS 10 DAOs DO SISTEMA ---
         AlunoDAO alunoDAO = new AlunoDAO();
