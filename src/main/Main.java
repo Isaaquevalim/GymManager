@@ -1,16 +1,13 @@
 package main;
 
 import dao.AlunoDAO;
-import dao.AulaDAO;
-import dao.FrequenciaDAO;
-import dao.InstrutorDAO;
-import dao.PlanoDAO;
+import dao.FuncionarioDAO;
+import dao.SalaDAO;
 import entities.Aluno;
-import entities.Aula;
 import entities.Funcionario;
+import entities.Sala;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -22,71 +19,79 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         int opcaoPrincipal = -1;
 
+        // Instanciando os DAOs que fazem a ponte com o PostgreSQL
         AlunoDAO alunoDAO = new AlunoDAO();
-        PlanoDAO planoDAO = new PlanoDAO();
-        InstrutorDAO instrutorDAO = new InstrutorDAO();
-        FrequenciaDAO frequenciaDAO = new FrequenciaDAO();
-        AulaDAO aulaDAO = new AulaDAO();
+        FuncionarioDAO funcionarioDAO = new FuncionarioDAO();
+        SalaDAO salaDAO = new SalaDAO();
 
         do {
-            System.out.println("\n=== SISTEMA DE GERENCIAMENTO DE ACADEMIA (GYM MANAGER) ===");
-            System.out.println("1. Gerenciar Alunos (CRUD)");
-            System.out.println("2. Gerenciar Planos");
-            System.out.println("3. Gerenciar Instrutores");
-            System.out.println("4. Gerenciar Aulas");
-            System.out.println("5. Registrar Frequência (Entrada)");
+            System.out.println("\n=== SISTEMA DE GERENCIAMENTO DE ACADEMIA ===");
+            System.out.println("1. Gerenciar Alunos");
+            System.out.println("2. Gerenciar Funcionários");
+            System.out.println("3. Gerenciar Salas");
+            System.out.println("4. Gerenciar Matrículas/Planos");
+            System.out.println("5. Gerenciar Aulas");
+            System.out.println("6. Gerenciar Equipamentos");
+            System.out.println("7. Gerenciar Serviços (Financeiro)");
             System.out.println("0. Sair do Sistema");
-            System.out.print("Escolha uma opção: ");
+            System.out.print("Escolha uma opção do fluxo: ");
 
-            // Tratamento preventivo caso digitem letras no menu principal
             try {
                 opcaoPrincipal = scanner.nextInt();
-                scanner.nextLine(); // Limpa o buffer
+                scanner.nextLine(); // Limpeza de buffer
             } catch (Exception e) {
-                System.out.println("❌ Por favor, digite apenas números!");
-                scanner.nextLine(); // Limpa a letra digitada para não dar loop infinito
+                System.out.println("❌ Por favor, digite apenas números válidos.");
+                scanner.nextLine();
                 continue;
             }
 
             switch (opcaoPrincipal) {
                 case 1:
-                    menuAlunos(scanner, alunoDAO, planoDAO);
+                    menuAlunos(scanner, alunoDAO);
                     break;
                 case 2:
-                    menuPlanos(scanner, planoDAO);
+                    menuFuncionarios(scanner, funcionarioDAO);
                     break;
                 case 3:
-                    menuInstrutores(scanner, instrutorDAO);
+                    menuSalas(scanner, salaDAO);
                     break;
                 case 4:
-                    menuAulas(scanner, aulaDAO, instrutorDAO, alunoDAO);
+                    System.out.println("⏳ Em construção: CRUD de Matrículas e Planos.");
                     break;
                 case 5:
-                    menuFrequencia(scanner, frequenciaDAO, alunoDAO); // -> Adicionado alunoDAO aqui no final
+                    System.out.println("⏳ Em construção: CRUD da Grade Horária de Aulas.");
+                    break;
+                case 6:
+                    System.out.println("⏳ Em construção: Controle de Inventário e Equipamentos.");
+                    break;
+                case 7:
+                    System.out.println("⏳ Em construção: Painel Financeiro e Custos Operacionais.");
                     break;
                 case 0:
-                    System.out.println("Encerrando o sistema... Até logo!");
+                    System.out.println("Encerrando o sistema. Ótimo trabalho, equipe!");
                     break;
                 default:
-                    System.out.println("Opção inválida! Tente novamente.");
+                    System.out.println("⚠️ Opção inválida!");
             }
         } while (opcaoPrincipal != 0);
 
         scanner.close();
     }
 
-    private static void menuAlunos(Scanner scanner, AlunoDAO alunoDAO, PlanoDAO planoDAO) {
-        int opcaoAluno = -1;
-
+    // --- FLUXO 1: CRUD DE ALUNOS ---
+    private static void menuAlunos(Scanner scanner, AlunoDAO alunoDAO) {
+        int opcao = -1;
         do {
             System.out.println("\n--- GERENCIAR ALUNOS ---");
-            System.out.println("1. Cadastrar Novo Aluno (Create)");
-            System.out.println("2. Listar Todos os Alunos (Read)");
+            System.out.println("1. Cadastrar Aluno (Create)");
+            System.out.println("2. Listar Alunos (Read)");
+            System.out.println("3. Atualizar Aluno (Update)");
+            System.out.println("4. Remover Aluno (Delete)");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
 
             try {
-                opcaoAluno = scanner.nextInt();
+                opcao = scanner.nextInt();
                 scanner.nextLine();
             } catch (Exception e) {
                 System.out.println("❌ Opção inválida!");
@@ -94,342 +99,148 @@ public class Main {
                 continue;
             }
 
-            switch (opcaoAluno) {
+            switch (opcao) {
                 case 1:
-                    System.out.print("Digite o nome do aluno: ");
+                    System.out.print("Nome Completo: ");
                     String nome = scanner.nextLine();
-
-                    System.out.print("Digite o CPF (Apenas números): ");
+                    System.out.print("CPF (Apenas números, até 14 caracteres): ");
                     String cpf = scanner.nextLine();
 
-                    // --- BLINDAGEM DA DATA DE NASCIMENTO ---
+                    // Blindagem de conversão de data
                     LocalDate dataNascimento = null;
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-                    // Enquanto o usuário não digitar a data no formato correto com as barras, o sistema não avança
                     while (dataNascimento == null) {
                         System.out.print("Data de Nascimento (DD/MM/AAAA): ");
-                        String dataNascStr = scanner.nextLine();
                         try {
-                            dataNascimento = LocalDate.parse(dataNascStr, formatter);
+                            dataNascimento = LocalDate.parse(scanner.nextLine(), formatter);
                         } catch (DateTimeParseException e) {
-                            // Captura o erro que travou o sistema antes e dá um aviso limpo
-                            System.out.println("❌ Formato inválido! Você precisa digitar com as barras. Exemplo: 28/09/2006");
+                            System.out.println("❌ Formato inválido! Utilize barras (ex: 28/09/2006).");
                         }
                     }
 
-                    System.out.print("Telefone: ");
-                    String telefone = scanner.nextLine();
-
-                    System.out.print("E-mail: ");
-                    String email = scanner.nextLine();
-
-                    // Instancia passando null no plano inicial para fins de teste
-                    Aluno novoAluno = new Aluno(0, nome, cpf, dataNascimento, telefone, email, LocalDate.now(), null);
+                    Aluno novoAluno = new Aluno(cpf, nome, dataNascimento);
                     alunoDAO.salvar(novoAluno);
                     break;
 
                 case 2:
-                    System.out.println("\n--- LISTA DE ALUNOS CADASTRADOS ---");
-                    List<Aluno> lista = alunoDAO.listarTodos();
-
-                    if (lista.isEmpty()) {
-                        System.out.println("Nenhum aluno cadastrado no banco de dados.");
+                    System.out.println("\n--- LISTA DE ALUNOS ---");
+                    List<Aluno> alunos = alunoDAO.listarTodos();
+                    if (alunos.isEmpty()) {
+                        System.out.println("Nenhum aluno cadastrado.");
                     } else {
-                        for (Aluno a : lista) {
-                            // Comunicação perfeita usando o novo método idAluno
-                            System.out.println("ID: " + a.getIdAluno() + " | Nome: " + a.getNome() + " | CPF: " + a.getCpf());
+                        for (Aluno a : alunos) {
+                            System.out.println("CPF: " + a.getCpfAluno() + " | Nome: " + a.getNomeCompleto() + " | Nasc: " + a.getDataNascimento());
                         }
                     }
                     break;
 
-                case 0:
-                    System.out.println("Retornando...");
-                    break;
-                default:
-                    System.out.println("Opção inválida!");
-            }
-        } while (opcaoAluno != 0);
-    }
+                case 3:
+                    System.out.print("Digite o CPF do aluno que deseja atualizar: ");
+                    String cpfAtualizar = scanner.nextLine();
+                    System.out.print("Novo Nome Completo: ");
+                    String novoNome = scanner.nextLine();
 
-    private static void menuPlanos(Scanner scanner, PlanoDAO planoDAO) {
-        int opcao = -1;
-        do {
-            System.out.println("\n--- GERENCIAR PLANOS ---");
-            System.out.println("1. Cadastrar Novo Plano (Create)");
-            System.out.println("2. Buscar Plano por ID (Read)");
-            System.out.println("0. Voltar ao Menu Principal");
-            System.out.print("Escolha: ");
-            try {
-                opcao = scanner.nextInt();
-                scanner.nextLine();
-            } catch (Exception e) {
-                System.out.println("❌ Opção inválida!");
-                scanner.nextLine();
-                continue;
-            }
-
-            switch (opcao) {
-                case 1:
-                    System.out.print("Nome do Plano (ex: Gold, Black): ");
-                    String nome = scanner.nextLine();
-                    System.out.print("Descrição dos benefícios: ");
-                    String descricao = scanner.nextLine();
-
-                    // --- BLINDAGEM DO VALOR MENSAL (DOUBLE) ---
-                    double valor = 0.0;
-                    boolean valorValido = false;
-                    while (!valorValido) {
-                        System.out.print("Valor Mensal (Ex: 299,90 ou 299.90): ");
-                        String valorStr = scanner.nextLine();
+                    LocalDate novaData = null;
+                    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    while (novaData == null) {
+                        System.out.print("Nova Data de Nascimento (DD/MM/AAAA): ");
                         try {
-                            // Substitui a vírgula por ponto caso o usuário digite no padrão brasileiro
-                            valorStr = valorStr.replace(",", ".");
-                            valor = Double.parseDouble(valorStr);
-                            valorValido = true;
-                        } catch (NumberFormatException e) {
-                            System.out.println("❌ Valor inválido! Digite um número decimal válido.");
-                        }
-                    }
-
-                    // --- BLINDAGEM DA DURAÇÃO (INT) ---
-                    int duracao = 0;
-                    boolean duracaoValida = false;
-                    while (!duracaoValida) {
-                        System.out.print("Duração (em meses): ");
-                        try {
-                            duracao = scanner.nextInt();
-                            scanner.nextLine(); // Limpa o buffer
-                            duracaoValida = true;
-                        } catch (Exception e) {
-                            System.out.println("❌ Digite um número inteiro para a quantidade de meses!");
-                            scanner.nextLine(); // Limpa o buffer do erro
-                        }
-                    }
-
-                    System.out.print("Benefícios inclusos adicionais: ");
-                    String beneficios = scanner.nextLine();
-
-                    Plano novoPlano = new Plano(0, nome, descricao, valor, duracao, beneficios);
-                    planoDAO.salvar(novoPlano);
-                    break;
-
-                case 2:
-                    System.out.print("Digite o ID do plano que deseja buscar: ");
-                    try {
-                        int idBusca = scanner.nextInt();
-                        scanner.nextLine(); // Limpa o buffer
-                        Plano plano = planoDAO.buscarPorId(idBusca);
-
-                        if (plano != null) {
-                            System.out.println("\nPlano Encontrado:");
-                            System.out.println("Nome: " + plano.getNome() + " | Valor: R$ " + plano.getValorMensal() + " | Duração: " + plano.getDuracaoMeses() + " meses");
-                        } else {
-                            System.out.println("Nenhum plano encontrado com o ID informado.");
-                        }
-                    } catch (Exception e) {
-                        System.out.println("❌ ID inválido! Digite apenas números.");
-                        scanner.nextLine();
-                    }
-                    break;
-
-                case 0:
-                    System.out.println("Retornando...");
-                    break;
-                default:
-                    System.out.println("Opção inválida!");
-            }
-        } while (opcao != 0);
-    }
-
-    private static void menuInstrutores(Scanner scanner, InstrutorDAO instrutorDAO) {
-        int opcao = -1;
-        do {
-            System.out.println("\n--- GERENCIAR INSTRUTORES ---");
-            System.out.println("1. Cadastrar Novo Instrutor (Create)");
-            System.out.println("0. Voltar ao Menu Principal");
-            System.out.print("Escolha: ");
-            try {
-                opcao = scanner.nextInt();
-                scanner.nextLine();
-            } catch (Exception e) {
-                System.out.println("❌ Opção inválida!");
-                scanner.nextLine();
-                continue;
-            }
-
-            switch (opcao) {
-                case 1:
-                    System.out.print("Nome do Instrutor: ");
-                    String nome = scanner.nextLine();
-                    System.out.print("CPF: ");
-                    String cpf = scanner.nextLine();
-                    System.out.print("Telefone: ");
-                    String telefone = scanner.nextLine();
-                    System.out.print("Especialidade (Musculação, Pilates, Yoga...): ");
-                    String especialidade = scanner.nextLine();
-                    System.out.print("Horários de Trabalho: ");
-                    String horarios = scanner.nextLine();
-
-                    Funcionario novoInstrutor = new Funcionario(0, nome, cpf, telefone, especialidade, horarios);
-                    instrutorDAO.salvar(novoInstrutor);
-                    break;
-
-                case 0:
-                    System.out.println("Retornando...");
-                    break;
-                default:
-                    System.out.println("Opção inválida!");
-            }
-        } while (opcao != 0);
-    }
-
-    private static void menuAulas(Scanner scanner, AulaDAO aulaDAO, InstrutorDAO instrutorDAO, AlunoDAO alunoDAO) {
-        int opcao = -1;
-        do {
-            System.out.println("\n--- GERENCIAR AULAS COLETIVAS ---");
-            System.out.println("1. Criar Nova Aula Coletiva (Create)");
-            System.out.println("2. Inscrever Aluno em uma Aula (Relacionamento N:M)");
-            System.out.println("0. Voltar ao Menu Principal");
-            System.out.print("Escolha: ");
-            try {
-                opcao = scanner.nextInt();
-                scanner.nextLine();
-            } catch (Exception e) {
-                System.out.println("❌ Opção inválida!");
-                scanner.nextLine();
-                continue;
-            }
-
-            switch (opcao) {
-                case 1:
-                    System.out.print("Nome da Aula (ex: Crossfit, Spinning): ");
-                    String nome = scanner.nextLine();
-                    System.out.print("Descrição da atividade: ");
-                    String descricao = scanner.nextLine();
-                    System.out.print("Capacidade Máxima de Alunos: ");
-                    int capacidade = scanner.nextInt();
-                    scanner.nextLine();
-
-                    // --- BLINDAGEM DO HORÁRIO DA AULA ---
-                    LocalDateTime horario = null;
-                    while (horario == null) {
-                        System.out.print("Horário (Formato AAAA-MM-DDTHH:MM, ex: 2026-05-20T19:00): ");
-                        String horarioStr = scanner.nextLine();
-                        try {
-                            horario = LocalDateTime.parse(horarioStr);
+                            novaData = LocalDate.parse(scanner.nextLine(), fmt);
                         } catch (DateTimeParseException e) {
-                            System.out.println("❌ Formato de horário inválido! Siga exatamente o padrão com o 'T' separando data e hora.");
+                            System.out.println("❌ Formato inválido!");
                         }
                     }
 
-                    System.out.print("Duração (em minutos): ");
-                    int duracao = scanner.nextInt();
-
-                    System.out.print("ID do Instrutor responsável: ");
-                    int idInstrutor = scanner.nextInt();
-                    Funcionario instrutor = instrutorDAO.buscarPorId(idInstrutor);
-
-                    if (instrutor != null) {
-                        Aula novaAula = new Aula(0, nome, descricao, capacidade, horario, duracao, instrutor);
-                        aulaDAO.salvar(novaAula);
-                    } else {
-                        System.out.println("Erro: Instrutor não encontrado! Não foi possível criar a aula.");
-                    }
+                    Aluno alunoAtualizado = new Aluno(cpfAtualizar, novoNome, novaData);
+                    alunoDAO.atualizar(alunoAtualizado);
                     break;
 
-                case 2:
-                    System.out.println("\n--- MATRICULAR ALUNO EM AULA ---");
-                    System.out.print("Digite o ID do Aluno: ");
-                    int idAluno = scanner.nextInt();
-                    System.out.print("Digite o ID da Aula Coletiva: ");
-                    int idAula = scanner.nextInt();
-
-                    Aluno alunoEncontrado = alunoDAO.buscarPorId(idAluno);
-                    Aula aulaEncontrada = aulaDAO.buscarPorId(idAula);
-
-                    if (alunoEncontrado != null && aulaEncontrada != null) {
-                        services.InscricaoService inscricaoService = new services.InscricaoService(aulaDAO);
-                        inscricaoService.matricularAluno(alunoEncontrado, aulaEncontrada);
-                    } else {
-                        System.out.println("Erro: Aluno ou Aula não encontrados no sistema.");
-                    }
+                case 4:
+                    System.out.print("Digite o CPF do aluno a ser removido: ");
+                    String cpfRemover = scanner.nextLine();
+                    alunoDAO.deletar(cpfRemover);
                     break;
-                default:
-                    System.out.println("Opção inválida!");
+
+                case 0: break;
+                default: System.out.println("⚠️ Opção inválida!");
             }
         } while (opcao != 0);
     }
 
-    private static void menuFrequencia(Scanner scanner, FrequenciaDAO frequenciaDAO, AlunoDAO alunoDAO) {
+    // --- FLUXO 2: CRUD DE FUNCIONÁRIOS ---
+    private static void menuFuncionarios(Scanner scanner, FuncionarioDAO funcionarioDAO) {
         int opcao = -1;
         do {
-            System.out.println("\n--- CONTROLE DE FREQUÊNCIA ---");
-            System.out.println("1. Registrar Entrada de Aluno (Catraca)");
-            System.out.println("2. Consultar Total de Visitas de um Aluno");
-            System.out.println("0. Voltar ao Menu Principal");
+            System.out.println("\n--- GERENCIAR FUNCIONÁRIOS ---");
+            System.out.println("1. Cadastrar Funcionário");
+            System.out.println("2. Listar Funcionários");
+            System.out.println("3. Desligar Funcionário");
+            System.out.println("0. Voltar");
             System.out.print("Escolha: ");
-            try {
-                opcao = scanner.nextInt();
-                scanner.nextLine(); // Limpa o buffer do teclado
-            } catch (Exception e) {
-                System.out.println("❌ Opção inválida!");
-                scanner.nextLine();
-                continue;
-            }
+
+            try { opcao = scanner.nextInt(); scanner.nextLine(); }
+            catch (Exception e) { scanner.nextLine(); continue; }
 
             switch (opcao) {
                 case 1:
-                    System.out.print("Digite o ID do aluno para liberar a entrada: ");
-                    try {
-                        int idAluno = scanner.nextInt();
-                        scanner.nextLine(); // Limpa o buffer
+                    System.out.print("Cargo (ex: Instrutor, Limpeza): ");
+                    String cargo = scanner.nextLine();
+                    System.out.print("Salário: ");
+                    double salario = Double.parseDouble(scanner.nextLine().replace(",", "."));
+                    System.out.print("Pontos de Acesso (ex: Todas as salas): ");
+                    String pontos = scanner.nextLine();
+                    System.out.print("Delegações (ex: Musculação período noturno): ");
+                    String delegacoes = scanner.nextLine();
 
-                        // Busca o aluno no banco de dados para descobrir o nome dele
-                        Aluno aluno = alunoDAO.buscarPorId(idAluno);
-
-                        if (aluno != null) {
-                            // Registra a entrada no banco de dados
-                            frequenciaDAO.registrarEntrada(idAluno);
-                            // Exibe a mensagem de sucesso muito mais intuitiva e personalizada!
-                            System.out.println("🎉 Entrada liberada! Seja bem-vindo(a), " + aluno.getNome() + "!");
-                        } else {
-                            System.out.println("❌ Erro: Não existe nenhum aluno cadastrado com o ID " + idAluno);
-                        }
-                    } catch (Exception e) {
-                        System.out.println("❌ ID inválido! Digite apenas números.");
-                        scanner.nextLine();
-                    }
+                    Funcionario f = new Funcionario(0, cargo, salario, pontos, delegacoes);
+                    funcionarioDAO.salvar(f);
                     break;
-
                 case 2:
-                    System.out.print("Digite o ID do aluno para checar o histórico: ");
-                    try {
-                        int idBusca = scanner.nextInt();
-                        scanner.nextLine(); // Limpa o buffer
-
-                        // Busca o aluno no banco de dados para descobrir o nome dele
-                        Aluno aluno = alunoDAO.buscarPorId(idBusca);
-
-                        if (aluno != null) {
-                            // Puxa o contador de acessos do FrequenciaDAO
-                            int totalVisitas = frequenciaDAO.contarVisitasAluno(idBusca);
-                            // Exibe o histórico usando o nome real do aluno
-                            System.out.println("📊 O(A) aluno(a) '" + aluno.getNome() + "' realizou um total de " + totalVisitas + " visitas à academia.");
-                        } else {
-                            System.out.println("❌ Erro: Aluno não encontrado com o ID informado.");
-                        }
-                    } catch (Exception e) {
-                        System.out.println("❌ ID inválido! Digite apenas números.");
-                        scanner.nextLine();
+                    System.out.println("\n--- LISTA DE FUNCIONÁRIOS ---");
+                    for (Funcionario func : funcionarioDAO.listarTodos()) {
+                        System.out.println("ID: " + func.getIdFuncionario() + " | Cargo: " + func.getCargo() + " | Salário: R$" + func.getSalario());
                     }
                     break;
-
-                case 0:
-                    System.out.println("Retornando...");
+                case 3:
+                    System.out.print("Digite o ID do funcionário a ser desligado: ");
+                    int idRemover = scanner.nextInt();
+                    funcionarioDAO.deletar(idRemover);
                     break;
-                default:
-                    System.out.println("Opção inválida!");
+            }
+        } while (opcao != 0);
+    }
+
+    // --- FLUXO 3: CRUD DE SALAS ---
+    private static void menuSalas(Scanner scanner, SalaDAO salaDAO) {
+        int opcao = -1;
+        do {
+            System.out.println("\n--- GERENCIAR SALAS ---");
+            System.out.println("1. Registrar Nova Sala");
+            System.out.println("2. Listar Salas Existentes");
+            System.out.println("0. Voltar");
+            System.out.print("Escolha: ");
+
+            try { opcao = scanner.nextInt(); scanner.nextLine(); }
+            catch (Exception e) { scanner.nextLine(); continue; }
+
+            switch (opcao) {
+                case 1:
+                    System.out.print("Número da Sala: ");
+                    int numero = scanner.nextInt(); scanner.nextLine();
+                    System.out.print("Tipo da Sala (ex: Pilates, Dança): ");
+                    String tipo = scanner.nextLine();
+                    System.out.print("Capacidade Máxima: ");
+                    int cap = scanner.nextInt(); scanner.nextLine();
+
+                    Sala sala = new Sala(numero, tipo, cap);
+                    salaDAO.salvar(sala);
+                    break;
+                case 2:
+                    System.out.println("\n--- LISTA DE SALAS ---");
+                    for (Sala s : salaDAO.listarTodas()) {
+                        System.out.println("Sala " + s.getNumeroSala() + " | Tipo: " + s.getTipoSala() + " | Capacidade: " + s.getCapacidadeMaxima() + " pessoas");
+                    }
+                    break;
             }
         } while (opcao != 0);
     }
