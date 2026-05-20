@@ -1,7 +1,5 @@
 package main;
 
-// Importamos todas as classes que vamos usar.
-// As classes DAO fazem a comunicação com o banco, e as Entities são os nossos objetos (Aluno, Plano, etc).
 import dao.AlunoDAO;
 import dao.AulaDAO;
 import dao.FrequenciaDAO;
@@ -13,27 +11,24 @@ import entities.Instrutor;
 import entities.Plano;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
-        // O Scanner é a nossa porta de entrada: é ele que vai ler tudo o que a gente digitar no terminal.
         Scanner scanner = new Scanner(System.in);
         int opcaoPrincipal = -1;
 
-        // Antes do menu iniciar, a gente prepara os DAOs.
-        // Eles são as nossas "ferramentas" para inserir ou buscar dados no PostgreSQL.
         AlunoDAO alunoDAO = new AlunoDAO();
         PlanoDAO planoDAO = new PlanoDAO();
         InstrutorDAO instrutorDAO = new InstrutorDAO();
         FrequenciaDAO frequenciaDAO = new FrequenciaDAO();
         AulaDAO aulaDAO = new AulaDAO();
 
-        // O 'do-while' garante que o menu vai aparecer pelo menos uma vez e
-        // vai continuar rodando em loop até alguém digitar '0'.
         do {
             System.out.println("\n=== SISTEMA DE GERENCIAMENTO DE ACADEMIA (GYM MANAGER) ===");
             System.out.println("1. Gerenciar Alunos (CRUD)");
@@ -44,14 +39,16 @@ public class Main {
             System.out.println("0. Sair do Sistema");
             System.out.print("Escolha uma opção: ");
 
-            opcaoPrincipal = scanner.nextInt();
+            // Tratamento preventivo caso digitem letras no menu principal
+            try {
+                opcaoPrincipal = scanner.nextInt();
+                scanner.nextLine(); // Limpa o buffer
+            } catch (Exception e) {
+                System.out.println("❌ Por favor, digite apenas números!");
+                scanner.nextLine(); // Limpa a letra digitada para não dar loop infinito
+                continue;
+            }
 
-            // ESSA LINHA É UM SALVA-VIDAS!
-            // Quando a gente digita um número e aperta Enter, o Java lê o número mas deixa o "Enter" na memória.
-            // Se a gente não "limpar" esse Enter com o nextLine() vazio, o próximo texto que o sistema pedir vai ser pulado sozinho.
-            scanner.nextLine();
-
-            // Direciona o sistema para o sub-menu que o usuário escolheu.
             switch (opcaoPrincipal) {
                 case 1:
                     menuAlunos(scanner, alunoDAO, planoDAO);
@@ -63,12 +60,10 @@ public class Main {
                     menuInstrutores(scanner, instrutorDAO);
                     break;
                 case 4:
-                    // Repare que o menu de aulas precisa tanto do DAO de aulas quanto do instrutor e aluno,
-                    // porque a aula junta todas essas informações (relacionamentos do banco).
                     menuAulas(scanner, aulaDAO, instrutorDAO, alunoDAO);
                     break;
                 case 5:
-                    menuFrequencia(scanner, frequenciaDAO);
+                    menuFrequencia(scanner, frequenciaDAO, alunoDAO); // -> Adicionado alunoDAO aqui no final
                     break;
                 case 0:
                     System.out.println("Encerrando o sistema... Até logo!");
@@ -78,12 +73,8 @@ public class Main {
             }
         } while (opcaoPrincipal != 0);
 
-        // Sempre feche o Scanner no final do programa para não vazar memória RAM.
         scanner.close();
     }
-
-    // --- SUB-MENUS ---
-    // Separamos cada entidade em uma função diferente para o 'main' não virar um arquivo de 1000 linhas impossível de ler.
 
     private static void menuAlunos(Scanner scanner, AlunoDAO alunoDAO, PlanoDAO planoDAO) {
         int opcaoAluno = -1;
@@ -95,25 +86,38 @@ public class Main {
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
 
-            opcaoAluno = scanner.nextInt();
-            scanner.nextLine(); // Limpa o "Enter" fantasma
+            try {
+                opcaoAluno = scanner.nextInt();
+                scanner.nextLine();
+            } catch (Exception e) {
+                System.out.println("❌ Opção inválida!");
+                scanner.nextLine();
+                continue;
+            }
 
             switch (opcaoAluno) {
                 case 1:
-                    // Coleta dos dados linha por linha
                     System.out.print("Digite o nome do aluno: ");
                     String nome = scanner.nextLine();
 
                     System.out.print("Digite o CPF (Apenas números): ");
                     String cpf = scanner.nextLine();
 
-                    System.out.print("Data de Nascimento (DD/MM/AAAA): ");
-                    String dataNascStr = scanner.nextLine();
-
-                    // O banco de dados e o Java trabalham com datas em formatos diferentes do que o brasileiro costuma digitar.
-                    // Esse DateTimeFormatter traduz o nosso "25/05/2000" para o padrão internacional do Java.
+                    // --- BLINDAGEM DA DATA DE NASCIMENTO ---
+                    LocalDate dataNascimento = null;
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                    LocalDate dataNascimento = LocalDate.parse(dataNascStr, formatter);
+
+                    // Enquanto o usuário não digitar a data no formato correto com as barras, o sistema não avança
+                    while (dataNascimento == null) {
+                        System.out.print("Data de Nascimento (DD/MM/AAAA): ");
+                        String dataNascStr = scanner.nextLine();
+                        try {
+                            dataNascimento = LocalDate.parse(dataNascStr, formatter);
+                        } catch (DateTimeParseException e) {
+                            // Captura o erro que travou o sistema antes e dá um aviso limpo
+                            System.out.println("❌ Formato inválido! Você precisa digitar com as barras. Exemplo: 28/09/2006");
+                        }
+                    }
 
                     System.out.print("Telefone: ");
                     String telefone = scanner.nextLine();
@@ -121,12 +125,8 @@ public class Main {
                     System.out.print("E-mail: ");
                     String email = scanner.nextLine();
 
-                    // Criamos o objeto Aluno na memória.
-                    // Repare que passamos '0' como ID. Fazemos isso porque o banco de dados (PostgreSQL)
-                    // está configurado para gerar o ID automaticamente quando salvarmos a linha.
+                    // Instancia passando null no plano inicial para fins de teste
                     Aluno novoAluno = new Aluno(0, nome, cpf, dataNascimento, telefone, email, LocalDate.now(), null);
-
-                    // Manda o objeto prontinho pro DAO fazer o trabalho de gerar o INSERT SQL.
                     alunoDAO.salvar(novoAluno);
                     break;
 
@@ -138,7 +138,7 @@ public class Main {
                         System.out.println("Nenhum aluno cadastrado no banco de dados.");
                     } else {
                         for (Aluno a : lista) {
-                            // CORRIGIDO AQUI: a.getIdAluno() em vez de a.getId()
+                            // Comunicação perfeita usando o novo método idAluno
                             System.out.println("ID: " + a.getIdAluno() + " | Nome: " + a.getNome() + " | CPF: " + a.getCpf());
                         }
                     }
@@ -161,8 +161,14 @@ public class Main {
             System.out.println("2. Buscar Plano por ID (Read)");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
-            opcao = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                opcao = scanner.nextInt();
+                scanner.nextLine();
+            } catch (Exception e) {
+                System.out.println("❌ Opção inválida!");
+                scanner.nextLine();
+                continue;
+            }
 
             switch (opcao) {
                 case 1:
@@ -170,31 +176,61 @@ public class Main {
                     String nome = scanner.nextLine();
                     System.out.print("Descrição dos benefícios: ");
                     String descricao = scanner.nextLine();
-                    System.out.print("Valor Mensal: ");
-                    double valor = scanner.nextDouble();
-                    System.out.print("Duração (em meses): ");
-                    int duracao = scanner.nextInt();
-                    scanner.nextLine(); // Mais um "limpa buffer" após ler um número
+
+                    // --- BLINDAGEM DO VALOR MENSAL (DOUBLE) ---
+                    double valor = 0.0;
+                    boolean valorValido = false;
+                    while (!valorValido) {
+                        System.out.print("Valor Mensal (Ex: 299,90 ou 299.90): ");
+                        String valorStr = scanner.nextLine();
+                        try {
+                            // Substitui a vírgula por ponto caso o usuário digite no padrão brasileiro
+                            valorStr = valorStr.replace(",", ".");
+                            valor = Double.parseDouble(valorStr);
+                            valorValido = true;
+                        } catch (NumberFormatException e) {
+                            System.out.println("❌ Valor inválido! Digite um número decimal válido.");
+                        }
+                    }
+
+                    // --- BLINDAGEM DA DURAÇÃO (INT) ---
+                    int duracao = 0;
+                    boolean duracaoValida = false;
+                    while (!duracaoValida) {
+                        System.out.print("Duração (em meses): ");
+                        try {
+                            duracao = scanner.nextInt();
+                            scanner.nextLine(); // Limpa o buffer
+                            duracaoValida = true;
+                        } catch (Exception e) {
+                            System.out.println("❌ Digite um número inteiro para a quantidade de meses!");
+                            scanner.nextLine(); // Limpa o buffer do erro
+                        }
+                    }
+
                     System.out.print("Benefícios inclusos adicionais: ");
                     String beneficios = scanner.nextLine();
 
-                    // Junta todos os dados soltos no pacote (objeto) Plano e joga pro banco
                     Plano novoPlano = new Plano(0, nome, descricao, valor, duracao, beneficios);
                     planoDAO.salvar(novoPlano);
                     break;
 
                 case 2:
                     System.out.print("Digite o ID do plano que deseja buscar: ");
-                    int idBusca = scanner.nextInt();
+                    try {
+                        int idBusca = scanner.nextInt();
+                        scanner.nextLine(); // Limpa o buffer
+                        Plano plano = planoDAO.buscarPorId(idBusca);
 
-                    // Vai no banco, procura o ID e retorna os dados se achar
-                    Plano plano = planoDAO.buscarPorId(idBusca);
-
-                    if (plano != null) {
-                        System.out.println("\nPlano Encontrado:");
-                        System.out.println("Nome: " + plano.getNome() + " | Valor: R$ " + plano.getValorMensal() + " | Duração: " + plano.getDuracaoMeses() + " meses");
-                    } else {
-                        System.out.println("Nenhum plano encontrado com o ID informado.");
+                        if (plano != null) {
+                            System.out.println("\nPlano Encontrado:");
+                            System.out.println("Nome: " + plano.getNome() + " | Valor: R$ " + plano.getValorMensal() + " | Duração: " + plano.getDuracaoMeses() + " meses");
+                        } else {
+                            System.out.println("Nenhum plano encontrado com o ID informado.");
+                        }
+                    } catch (Exception e) {
+                        System.out.println("❌ ID inválido! Digite apenas números.");
+                        scanner.nextLine();
                     }
                     break;
 
@@ -214,8 +250,14 @@ public class Main {
             System.out.println("1. Cadastrar Novo Instrutor (Create)");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
-            opcao = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                opcao = scanner.nextInt();
+                scanner.nextLine();
+            } catch (Exception e) {
+                System.out.println("❌ Opção inválida!");
+                scanner.nextLine();
+                continue;
+            }
 
             switch (opcao) {
                 case 1:
@@ -251,8 +293,14 @@ public class Main {
             System.out.println("2. Inscrever Aluno em uma Aula (Relacionamento N:M)");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
-            opcao = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                opcao = scanner.nextInt();
+                scanner.nextLine();
+            } catch (Exception e) {
+                System.out.println("❌ Opção inválida!");
+                scanner.nextLine();
+                continue;
+            }
 
             switch (opcao) {
                 case 1:
@@ -263,20 +311,27 @@ public class Main {
                     System.out.print("Capacidade Máxima de Alunos: ");
                     int capacidade = scanner.nextInt();
                     scanner.nextLine();
-                    System.out.print("Horário (Formato AAA-MM-DDTHH:MM, ex: 2026-05-20T19:00): ");
-                    String horarioStr = scanner.nextLine();
-                    java.time.LocalDateTime horario = java.time.LocalDateTime.parse(horarioStr);
+
+                    // --- BLINDAGEM DO HORÁRIO DA AULA ---
+                    LocalDateTime horario = null;
+                    while (horario == null) {
+                        System.out.print("Horário (Formato AAAA-MM-DDTHH:MM, ex: 2026-05-20T19:00): ");
+                        String horarioStr = scanner.nextLine();
+                        try {
+                            horario = LocalDateTime.parse(horarioStr);
+                        } catch (DateTimeParseException e) {
+                            System.out.println("❌ Formato de horário inválido! Siga exatamente o padrão com o 'T' separando data e hora.");
+                        }
+                    }
+
                     System.out.print("Duração (em minutos): ");
                     int duracao = scanner.nextInt();
 
                     System.out.print("ID do Instrutor responsável: ");
                     int idInstrutor = scanner.nextInt();
-
-                    // Validação de segurança: Antes de criar a aula, o sistema verifica se o ID do instrutor digitado existe mesmo no banco.
                     Instrutor instrutor = instrutorDAO.buscarPorId(idInstrutor);
 
                     if (instrutor != null) {
-                        // Se o instrutor existir, vincula ele à nova aula.
                         Aula novaAula = new Aula(0, nome, descricao, capacidade, horario, duracao, instrutor);
                         aulaDAO.salvar(novaAula);
                     } else {
@@ -291,18 +346,11 @@ public class Main {
                     System.out.print("Digite o ID da Aula Coletiva: ");
                     int idAula = scanner.nextInt();
 
-                    // --- ATENÇÃO EQUIPE: AQUI ESTÁ O CORAÇÃO DA NOSSA AVALIAÇÃO! ---
-                    // Ao invés de só socar os IDs no banco de dados, nós buscamos os dados completos do aluno e da aula.
                     Aluno alunoEncontrado = alunoDAO.buscarPorId(idAluno);
                     Aula aulaEncontrada = aulaDAO.buscarPorId(idAula);
 
-                    // Se tanto a aula quanto o aluno existirem...
                     if (alunoEncontrado != null && aulaEncontrada != null) {
-                        // Acionamos a nossa camada de Serviços (onde moram as regras de negócio complexas).
                         services.InscricaoService inscricaoService = new services.InscricaoService(aulaDAO);
-
-                        // O matricularAluno() vai conferir os horários, limite de vagas e validade do plano
-                        // antes de autorizar a gravação no banco de dados.
                         inscricaoService.matricularAluno(alunoEncontrado, aulaEncontrada);
                     } else {
                         System.out.println("Erro: Aluno ou Aula não encontrados no sistema.");
@@ -314,7 +362,7 @@ public class Main {
         } while (opcao != 0);
     }
 
-    private static void menuFrequencia(Scanner scanner, FrequenciaDAO frequenciaDAO) {
+    private static void menuFrequencia(Scanner scanner, FrequenciaDAO frequenciaDAO, AlunoDAO alunoDAO) {
         int opcao = -1;
         do {
             System.out.println("\n--- CONTROLE DE FREQUÊNCIA ---");
@@ -322,23 +370,60 @@ public class Main {
             System.out.println("2. Consultar Total de Visitas de um Aluno");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
-            opcao = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                opcao = scanner.nextInt();
+                scanner.nextLine(); // Limpa o buffer do teclado
+            } catch (Exception e) {
+                System.out.println("❌ Opção inválida!");
+                scanner.nextLine();
+                continue;
+            }
 
             switch (opcao) {
                 case 1:
                     System.out.print("Digite o ID do aluno para liberar a entrada: ");
-                    int idAluno = scanner.nextInt();
-                    // Registra a entrada usando o momento (data e hora) em que o código foi executado
-                    frequenciaDAO.registrarEntrada(idAluno);
+                    try {
+                        int idAluno = scanner.nextInt();
+                        scanner.nextLine(); // Limpa o buffer
+
+                        // Busca o aluno no banco de dados para descobrir o nome dele
+                        Aluno aluno = alunoDAO.buscarPorId(idAluno);
+
+                        if (aluno != null) {
+                            // Registra a entrada no banco de dados
+                            frequenciaDAO.registrarEntrada(idAluno);
+                            // Exibe a mensagem de sucesso muito mais intuitiva e personalizada!
+                            System.out.println("🎉 Entrada liberada! Seja bem-vindo(a), " + aluno.getNome() + "!");
+                        } else {
+                            System.out.println("❌ Erro: Não existe nenhum aluno cadastrado com o ID " + idAluno);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("❌ ID inválido! Digite apenas números.");
+                        scanner.nextLine();
+                    }
                     break;
 
                 case 2:
                     System.out.print("Digite o ID do aluno para checar o histórico: ");
-                    int idBusca = scanner.nextInt();
-                    // Conta no banco de dados quantas vezes aquele ID aparece na tabela de frequência
-                    int totalVisitas = frequenciaDAO.contarVisitasAluno(idBusca);
-                    System.out.println("O aluno com ID " + idBusca + " realizou " + totalVisitas + " visitas à academia.");
+                    try {
+                        int idBusca = scanner.nextInt();
+                        scanner.nextLine(); // Limpa o buffer
+
+                        // Busca o aluno no banco de dados para descobrir o nome dele
+                        Aluno aluno = alunoDAO.buscarPorId(idBusca);
+
+                        if (aluno != null) {
+                            // Puxa o contador de acessos do FrequenciaDAO
+                            int totalVisitas = frequenciaDAO.contarVisitasAluno(idBusca);
+                            // Exibe o histórico usando o nome real do aluno
+                            System.out.println("📊 O(A) aluno(a) '" + aluno.getNome() + "' realizou um total de " + totalVisitas + " visitas à academia.");
+                        } else {
+                            System.out.println("❌ Erro: Aluno não encontrado com o ID informado.");
+                        }
+                    } catch (Exception e) {
+                        System.out.println("❌ ID inválido! Digite apenas números.");
+                        scanner.nextLine();
+                    }
                     break;
 
                 case 0:
