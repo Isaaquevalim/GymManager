@@ -1,27 +1,49 @@
 package entities;
 
-import java.time.LocalDateTime;
-
+// Objetivo: Atuar como a entidade que resolve o relacionamento Muitos-para-Muitos (N:M) entre Alunos e Aulas.
 public class Frequencia {
-    // Atributos privados mapeados a partir da tabela 'frequencia'
-    private int id;
-    private Aluno aluno; // Relacionamento 1:N (Chave estrangeira id_aluno)
-    private LocalDateTime dataHoraEntrada; // Registra momento exato da passagem pela catraca
 
-    // Construtor completo da classe Frequencia
-    public Frequencia(int id, Aluno aluno, LocalDateTime dataHoraEntrada) {
-        this.id = id;
+    private int idFrequencia;
+    private Aluno aluno; // Associação com o Aluno que realizou o check-in.
+    private Aula aula; // Associação com a Aula assistida.
+    private int quantidade;
+
+    public Frequencia(int idFrequencia, Aluno aluno, Aula aula, int quantidade) {
+        this.idFrequencia = idFrequencia;
         this.aluno = aluno;
-        this.dataHoraEntrada = dataHoraEntrada;
+        this.aula = aula;
+        this.quantidade = quantidade;
     }
 
-    // Métodos Getters e Setters de encapsulamento
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getIdFrequencia() {
+        return idFrequencia;
+    }
 
-    public Aluno getAluno() { return aluno; }
-    public void setAluno(Aluno aluno) { this.aluno = aluno; }
+    public void setIdFrequencia(int idFrequencia) {
+        this.idFrequencia = idFrequencia;
+    }
 
-    public LocalDateTime getDataHoraEntrada() { return dataHoraEntrada; }
-    public void setDataHoraEntrada(LocalDateTime dataHoraEntrada) { this.dataHoraEntrada = dataHoraEntrada; }
+    public Aluno getAluno() {
+        return aluno;
+    }
+
+    public void setAluno(Aluno aluno) {
+        this.aluno = aluno;
+    }
+
+    public Aula getAula() {
+        return aula;
+    }
+
+    public void setAula(Aula aula) {
+        this.aula = aula;
+    }
+
+    public int getQuantidade() {
+        return quantidade;
+    }
+
+    public void setQuantidade(int quantidade) {
+        this.quantidade = quantidade;
+    }
 }

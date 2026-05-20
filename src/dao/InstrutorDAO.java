@@ -1,6 +1,6 @@
 package dao;
 
-import entities.Instrutor;
+import entities.Funcionario;
 import database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class InstrutorDAO {
 
-    public void salvar(Instrutor instrutor) {
+    public void salvar(Funcionario instrutor) {
         String sql = "INSERT INTO instrutor (nome, cpf, telefone, especialidade, horarios_trabalho) VALUES (?, ?, ?, ?, ?)";
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -34,7 +34,7 @@ public class InstrutorDAO {
     }
 
     // Método adaptado para buscar pela coluna identificadora correta
-    public Instrutor buscarPorId(int idInstrutor) {
+    public Funcionario buscarPorId(int idInstrutor) {
         String sql = "SELECT * FROM instrutor WHERE id_instrutor = ?";
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -47,7 +47,7 @@ public class InstrutorDAO {
             rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return new Instrutor(
+                return new Funcionario(
                         rs.getInt("id_instrutor"),
                         rs.getString("nome"),
                         rs.getString("cpf"),

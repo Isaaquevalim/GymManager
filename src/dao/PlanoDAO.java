@@ -1,6 +1,5 @@
 package dao;
 
-import entities.Plano;
 import database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

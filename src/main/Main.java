@@ -7,8 +7,7 @@ import dao.InstrutorDAO;
 import dao.PlanoDAO;
 import entities.Aluno;
 import entities.Aula;
-import entities.Instrutor;
-import entities.Plano;
+import entities.Funcionario;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -272,7 +271,7 @@ public class Main {
                     System.out.print("Horários de Trabalho: ");
                     String horarios = scanner.nextLine();
 
-                    Instrutor novoInstrutor = new Instrutor(0, nome, cpf, telefone, especialidade, horarios);
+                    Funcionario novoInstrutor = new Funcionario(0, nome, cpf, telefone, especialidade, horarios);
                     instrutorDAO.salvar(novoInstrutor);
                     break;
 
@@ -329,7 +328,7 @@ public class Main {
 
                     System.out.print("ID do Instrutor responsável: ");
                     int idInstrutor = scanner.nextInt();
-                    Instrutor instrutor = instrutorDAO.buscarPorId(idInstrutor);
+                    Funcionario instrutor = instrutorDAO.buscarPorId(idInstrutor);
 
                     if (instrutor != null) {
                         Aula novaAula = new Aula(0, nome, descricao, capacidade, horario, duracao, instrutor);

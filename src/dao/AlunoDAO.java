@@ -2,7 +2,6 @@ package dao;
 
 // Importamos as classes de modelo e a nossa classe de conexão, além das ferramentas do JDBC.
 import entities.Aluno;
-import entities.Plano;
 import database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.Date;

@@ -2,49 +2,44 @@ package entities;
 
 import java.time.LocalDate;
 
+// Objetivo: Representar o cliente da academia.
+// Regra de Banco: O CPF mapeia a chave primária (PK) 'cpf_aluno' do tipo VARCHAR.
 public class Aluno {
-    // Atributo renomeado para corresponder a 'id_aluno'
-    private int idAluno;
-    private String nome;
-    private String cpf;
+
+    // Atributos privados garantindo o pilar do encapsulamento em POO.
+    private String cpfAluno;
+    private String nomeCompleto;
     private LocalDate dataNascimento;
-    private String telefone;
-    private String email;
-    private LocalDate dataMatricula;
-    private Plano planoAtivo;
 
-
-    public Aluno(int idAluno, String nome, String cpf, LocalDate dataNascimento, String telefone, String email, LocalDate dataMatricula, Plano planoAtivo) {
-        this.idAluno = idAluno;
-        this.nome = nome;
-        this.cpf = cpf;
+    // Construtor completo para inicializar o objeto com os dados vindos do banco de dados.
+    public Aluno(String cpfAluno, String nomeCompleto, LocalDate dataNascimento) {
+        this.cpfAluno = cpfAluno;
+        this.nomeCompleto = nomeCompleto;
         this.dataNascimento = dataNascimento;
-        this.telefone = telefone;
-        this.email = email;
-        this.dataMatricula = dataMatricula;
-        this.planoAtivo = planoAtivo;
     }
 
-    public int getIdAluno() { return idAluno; }
-    public void setIdAluno(int idAluno) { this.idAluno = idAluno; }
-
-    public String getNome() { return nome; }
-    public String getCpf() { return cpf; }
-    public LocalDate getDataNascimento() { return dataNascimento; }
-    public String getTelefone() { return telefone; }
-    public String getEmail() { return email; }
-    public LocalDate getDataMatricula() { return dataMatricula; }
-    public Plano getPlanoAtivo() { return planoAtivo; }
-
-    public LocalDate calcularVencimentoPlano() {
-        if (this.planoAtivo != null) {
-            return this.dataMatricula.plusMonths(this.planoAtivo.getDuracaoMeses());
-        }
-        return null;
+    // Métodos Getters (leitura) e Setters (escrita) para acesso seguro aos atributos.
+    public String getCpfAluno() {
+        return cpfAluno;
     }
 
-    public boolean isPlanoAtivo() {
-        LocalDate vencimento = calcularVencimentoPlano();
-        return vencimento != null && LocalDate.now().isBefore(vencimento);
+    public void setCpfAluno(String cpfAluno) {
+        this.cpfAluno = cpfAluno;
+    }
+
+    public String getNomeCompleto() {
+        return nomeCompleto;
+    }
+
+    public void setNomeCompleto(String nomeCompleto) {
+        this.nomeCompleto = nomeCompleto;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
     }
 }

@@ -1,7 +1,7 @@
 package dao;
 
 import entities.Aula;
-import entities.Instrutor;
+import entities.Funcionario;
 import database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,7 +63,7 @@ public class AulaDAO {
                 int idInstrutor = rs.getInt("id_instrutor");
 
                 // Manda o InstrutorDAO ir buscar os dados do professor
-                Instrutor instrutor = instrutorDAO.buscarPorId(idInstrutor);
+                Funcionario instrutor = instrutorDAO.buscarPorId(idInstrutor);
 
                 // Reconstrói o objeto Aula com o ID correto e o professor associado
                 return new Aula(
