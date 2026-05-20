@@ -17,7 +17,7 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         int opcaoPrincipal = -1;
 
-        Locale.setDefault(new Locale("pt", "BR"))
+        Locale.setDefault(new Locale("pt", "BR"));
 
         // --- INSTANCIANDO TODOS OS 10 DAOs DO SISTEMA ---
         AlunoDAO alunoDAO = new AlunoDAO();
