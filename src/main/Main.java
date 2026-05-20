@@ -1,13 +1,10 @@
 package main;
 
-import dao.AlunoDAO;
-import dao.FuncionarioDAO;
-import dao.SalaDAO;
-import entities.Aluno;
-import entities.Funcionario;
-import entities.Sala;
+import dao.*;
+import entities.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -19,26 +16,33 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         int opcaoPrincipal = -1;
 
-        // Instanciando os DAOs que fazem a ponte com o PostgreSQL
+        // --- INSTANCIANDO TODOS OS 10 DAOs DO SISTEMA ---
         AlunoDAO alunoDAO = new AlunoDAO();
         FuncionarioDAO funcionarioDAO = new FuncionarioDAO();
         SalaDAO salaDAO = new SalaDAO();
+        MatriculaDAO matriculaDAO = new MatriculaDAO();
+        AulaDAO aulaDAO = new AulaDAO();
+        EquipamentoDAO equipamentoDAO = new EquipamentoDAO();
+        FrequenciaDAO frequenciaDAO = new FrequenciaDAO();
+        ManutencaoDAO manutencaoDAO = new ManutencaoDAO();
+        PagamentoDAO pagamentoDAO = new PagamentoDAO();
+        ServicosExternosDAO servicosExternosDAO = new ServicosExternosDAO();
 
         do {
-            System.out.println("\n=== SISTEMA DE GERENCIAMENTO DE ACADEMIA ===");
+            System.out.println("\n=== SISTEMA DE GERENCIAMENTO DE ACADEMIA (GYM MANAGER) ===");
             System.out.println("1. Gerenciar Alunos");
             System.out.println("2. Gerenciar Funcionários");
             System.out.println("3. Gerenciar Salas");
             System.out.println("4. Gerenciar Matrículas/Planos");
             System.out.println("5. Gerenciar Aulas");
             System.out.println("6. Gerenciar Equipamentos");
-            System.out.println("7. Gerenciar Serviços (Financeiro)");
+            System.out.println("7. Gerenciar Serviços (Painel Financeiro)");
             System.out.println("0. Sair do Sistema");
             System.out.print("Escolha uma opção do fluxo: ");
 
             try {
                 opcaoPrincipal = scanner.nextInt();
-                scanner.nextLine(); // Limpeza de buffer
+                scanner.nextLine();
             } catch (Exception e) {
                 System.out.println("❌ Por favor, digite apenas números válidos.");
                 scanner.nextLine();
@@ -46,202 +50,231 @@ public class Main {
             }
 
             switch (opcaoPrincipal) {
-                case 1:
-                    menuAlunos(scanner, alunoDAO);
-                    break;
-                case 2:
-                    menuFuncionarios(scanner, funcionarioDAO);
-                    break;
-                case 3:
-                    menuSalas(scanner, salaDAO);
-                    break;
-                case 4:
-                    System.out.println("⏳ Em construção: CRUD de Matrículas e Planos.");
-                    break;
-                case 5:
-                    System.out.println("⏳ Em construção: CRUD da Grade Horária de Aulas.");
-                    break;
-                case 6:
-                    System.out.println("⏳ Em construção: Controle de Inventário e Equipamentos.");
-                    break;
-                case 7:
-                    System.out.println("⏳ Em construção: Painel Financeiro e Custos Operacionais.");
-                    break;
-                case 0:
-                    System.out.println("Encerrando o sistema. Ótimo trabalho, equipe!");
-                    break;
-                default:
-                    System.out.println("⚠️ Opção inválida!");
+                case 1: menuAlunos(scanner, alunoDAO); break;
+                case 2: menuFuncionarios(scanner, funcionarioDAO); break;
+                case 3: menuSalas(scanner, salaDAO); break;
+                case 4: menuMatriculas(scanner, matriculaDAO); break;
+                case 5: menuAulas(scanner, aulaDAO); break;
+                case 6: menuEquipamentos(scanner, equipamentoDAO); break;
+                case 7: menuFinanceiro(scanner, pagamentoDAO, manutencaoDAO, servicosExternosDAO, funcionarioDAO); break;
+                case 0: System.out.println("Encerrando o sistema. Ótimo trabalho, equipe!"); break;
+                default: System.out.println("⚠️ Opção inválida!");
             }
         } while (opcaoPrincipal != 0);
 
         scanner.close();
     }
 
-    // --- FLUXO 1: CRUD DE ALUNOS ---
+    // ==========================================================
+    // FLUXOS 1, 2 e 3: Cadastros Base
+    // ==========================================================
     private static void menuAlunos(Scanner scanner, AlunoDAO alunoDAO) {
-        int opcao = -1;
+        System.out.println("\n--- GERENCIAR ALUNOS ---");
+        System.out.print("1. Cadastrar | 2. Listar | 3. Deletar | Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+        if (op == 1) {
+            System.out.print("Nome: "); String nome = scanner.nextLine();
+            System.out.print("CPF: "); String cpf = scanner.nextLine();
+            Aluno aluno = new Aluno(cpf, nome, LocalDate.now()); // Data simplificada para agilidade no teste
+            alunoDAO.salvar(aluno);
+        } else if (op == 2) {
+            for (Aluno a : alunoDAO.listarTodos()) System.out.println("CPF: " + a.getCpfAluno() + " | Nome: " + a.getNomeCompleto());
+        } else if (op == 3) {
+            System.out.print("CPF para deletar: "); String cpf = scanner.nextLine();
+            alunoDAO.deletar(cpf);
+        }
+    }
+
+    private static void menuFuncionarios(Scanner scanner, FuncionarioDAO funcionarioDAO) {
+        System.out.println("\n--- GERENCIAR FUNCIONÁRIOS ---");
+        System.out.print("1. Cadastrar | 2. Listar | Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+        if (op == 1) {
+            System.out.print("Cargo: "); String cargo = scanner.nextLine();
+            System.out.print("Salário: "); double salario = Double.parseDouble(scanner.nextLine().replace(",", "."));
+            Funcionario f = new Funcionario(0, cargo, salario, "Acesso Geral", "Nenhuma");
+            funcionarioDAO.salvar(f);
+        } else if (op == 2) {
+            for (Funcionario f : funcionarioDAO.listarTodos()) System.out.println("ID: " + f.getIdFuncionario() + " | Cargo: " + f.getCargo() + " | Salário: R$" + f.getSalario());
+        }
+    }
+
+    private static void menuSalas(Scanner scanner, SalaDAO salaDAO) {
+        System.out.println("\n--- GERENCIAR SALAS ---");
+        System.out.print("1. Cadastrar | 2. Listar | Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+        if (op == 1) {
+            System.out.print("Número da Sala: "); int num = scanner.nextInt(); scanner.nextLine();
+            System.out.print("Tipo (ex: Pilates): "); String tipo = scanner.nextLine();
+            System.out.print("Capacidade: "); int cap = scanner.nextInt(); scanner.nextLine();
+            salaDAO.salvar(new Sala(num, tipo, cap));
+        } else if (op == 2) {
+            for (Sala s : salaDAO.listarTodas()) System.out.println("Sala " + s.getNumeroSala() + " | " + s.getTipoSala() + " | Vagas: " + s.getCapacidadeMaxima());
+        }
+    }
+
+    // ==========================================================
+    // FLUXO 4: Matrículas e Planos
+    // ==========================================================
+    private static void menuMatriculas(Scanner scanner, MatriculaDAO matriculaDAO) {
+        System.out.println("\n--- GERENCIAR MATRÍCULAS ---");
+        System.out.println("1. Nova Matrícula/Plano");
+        System.out.print("Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+
+        if (op == 1) {
+            System.out.print("CPF do Aluno existente: ");
+            String cpf = scanner.nextLine();
+            System.out.print("Tipo do Plano (ex: Black, Mensal): ");
+            String tipo = scanner.nextLine();
+            System.out.print("Valor do Plano: R$ ");
+            double valor = Double.parseDouble(scanner.nextLine().replace(",", "."));
+            System.out.print("Permissões (ex: Acesso Total): ");
+            String permissoes = scanner.nextLine();
+
+            // Instancia um aluno apenas com o CPF para servir de Chave Estrangeira no BD
+            Aluno alunoRef = new Aluno(cpf, null, null);
+            Matricula m = new Matricula(0, alunoRef, tipo, valor, LocalDate.now(), LocalDate.now().plusMonths(1), permissoes);
+            matriculaDAO.salvar(m);
+        }
+    }
+
+    // ==========================================================
+    // FLUXO 5: Grade de Aulas
+    // ==========================================================
+    private static void menuAulas(Scanner scanner, AulaDAO aulaDAO) {
+        System.out.println("\n--- GERENCIAR AULAS ---");
+        System.out.println("1. Agendar Nova Aula");
+        System.out.print("Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+
+        if (op == 1) {
+            System.out.print("Número da Sala (Existente): ");
+            int idSala = scanner.nextInt();
+            System.out.print("ID do Funcionário/Instrutor (Existente): ");
+            int idFunc = scanner.nextInt(); scanner.nextLine();
+            System.out.print("Tipo de Aula (ex: Spinning): ");
+            String tipo = scanner.nextLine();
+
+            System.out.print("Horário da Aula (HH:MM, ex: 19:30): ");
+            LocalTime horario = LocalTime.parse(scanner.nextLine() + ":00"); // Adiciona segundos para o padrão SQL
+
+            Sala salaRef = new Sala(idSala, null, 0);
+            Funcionario funcRef = new Funcionario(idFunc, null, 0, null, null);
+            Aula novaAula = new Aula(0, salaRef, funcRef, tipo, LocalDate.now(), horario);
+
+            aulaDAO.salvar(novaAula);
+        }
+    }
+
+    // ==========================================================
+    // FLUXO 6: Inventário de Equipamentos
+    // ==========================================================
+    private static void menuEquipamentos(Scanner scanner, EquipamentoDAO equipamentoDAO) {
+        System.out.println("\n--- GERENCIAR EQUIPAMENTOS ---");
+        System.out.println("1. Cadastrar Máquina");
+        System.out.println("2. Alterar Status (Ex: Enviar para Manutenção)");
+        System.out.print("Escolha: ");
+        int op = scanner.nextInt(); scanner.nextLine();
+
+        if (op == 1) {
+            System.out.print("Número da Sala onde ficará: ");
+            int idSala = scanner.nextInt(); scanner.nextLine();
+            System.out.print("Tipo de Equipamento (ex: Esteira, Halter): ");
+            String tipo = scanner.nextLine();
+            System.out.print("Quantidade: ");
+            int qtd = scanner.nextInt(); scanner.nextLine();
+
+            Sala salaRef = new Sala(idSala, null, 0);
+            Equipamento eq = new Equipamento(0, salaRef, tipo, qtd, "Ativo");
+            equipamentoDAO.salvar(eq);
+        } else if (op == 2) {
+            System.out.print("ID do Equipamento: ");
+            int idEq = scanner.nextInt(); scanner.nextLine();
+            System.out.print("Novo Status (Ativo / Em Manutenção / Quebrado): ");
+            String status = scanner.nextLine();
+            equipamentoDAO.atualizarStatus(idEq, status);
+        }
+    }
+
+    // ==========================================================
+    // FLUXO 7: O Painel Financeiro e Custos Operacionais
+    // ==========================================================
+    private static void menuFinanceiro(Scanner scanner, PagamentoDAO pagDAO, ManutencaoDAO manDAO, ServicosExternosDAO servDAO, FuncionarioDAO funcDAO) {
+        int op = -1;
         do {
-            System.out.println("\n--- GERENCIAR ALUNOS ---");
-            System.out.println("1. Cadastrar Aluno (Create)");
-            System.out.println("2. Listar Alunos (Read)");
-            System.out.println("3. Atualizar Aluno (Update)");
-            System.out.println("4. Remover Aluno (Delete)");
-            System.out.println("0. Voltar ao Menu Principal");
+            System.out.println("\n--- GERENCIAR SERVIÇOS E FINANCEIRO ---");
+            System.out.println("1. Registrar Entrada (Pagamento de Mensalidade)");
+            System.out.println("2. Registrar Despesa (Serviço Externo/Contas)");
+            System.out.println("3. Registrar Custo de Manutenção");
+            System.out.println("4. 📊 Gerar Painel de Relatório Financeiro");
+            System.out.println("0. Voltar");
             System.out.print("Escolha: ");
+            op = scanner.nextInt(); scanner.nextLine();
 
-            try {
-                opcao = scanner.nextInt();
-                scanner.nextLine();
-            } catch (Exception e) {
-                System.out.println("❌ Opção inválida!");
-                scanner.nextLine();
-                continue;
-            }
-
-            switch (opcao) {
+            switch (op) {
                 case 1:
-                    System.out.print("Nome Completo: ");
-                    String nome = scanner.nextLine();
-                    System.out.print("CPF (Apenas números, até 14 caracteres): ");
-                    String cpf = scanner.nextLine();
+                    System.out.print("ID da Matrícula vinculada: ");
+                    int idMat = scanner.nextInt(); scanner.nextLine();
+                    System.out.print("Valor Recebido: R$ ");
+                    double valorPago = Double.parseDouble(scanner.nextLine().replace(",", "."));
 
-                    // Blindagem de conversão de data
-                    LocalDate dataNascimento = null;
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                    while (dataNascimento == null) {
-                        System.out.print("Data de Nascimento (DD/MM/AAAA): ");
-                        try {
-                            dataNascimento = LocalDate.parse(scanner.nextLine(), formatter);
-                        } catch (DateTimeParseException e) {
-                            System.out.println("❌ Formato inválido! Utilize barras (ex: 28/09/2006).");
-                        }
-                    }
-
-                    Aluno novoAluno = new Aluno(cpf, nome, dataNascimento);
-                    alunoDAO.salvar(novoAluno);
+                    Matricula mRef = new Matricula(idMat, null, null, 0, null, null, null);
+                    pagDAO.salvar(new Pagamento(0, mRef, LocalDate.now(), valorPago, "Pago"));
                     break;
 
                 case 2:
-                    System.out.println("\n--- LISTA DE ALUNOS ---");
-                    List<Aluno> alunos = alunoDAO.listarTodos();
-                    if (alunos.isEmpty()) {
-                        System.out.println("Nenhum aluno cadastrado.");
-                    } else {
-                        for (Aluno a : alunos) {
-                            System.out.println("CPF: " + a.getCpfAluno() + " | Nome: " + a.getNomeCompleto() + " | Nasc: " + a.getDataNascimento());
-                        }
-                    }
+                    System.out.print("Descrição da Despesa (ex: Conta de Luz, Empresa de Limpeza): ");
+                    String desc = scanner.nextLine();
+                    System.out.print("Valor do Serviço: R$ ");
+                    double valorServ = Double.parseDouble(scanner.nextLine().replace(",", "."));
+
+                    servDAO.salvar(new ServicosExternos(0, null, null, desc, valorServ, LocalDate.now(), "Pago"));
                     break;
 
                 case 3:
-                    System.out.print("Digite o CPF do aluno que deseja atualizar: ");
-                    String cpfAtualizar = scanner.nextLine();
-                    System.out.print("Novo Nome Completo: ");
-                    String novoNome = scanner.nextLine();
+                    System.out.print("ID do Equipamento Consertado: ");
+                    int idEq = scanner.nextInt(); scanner.nextLine();
+                    System.out.print("Custo do Conserto: R$ ");
+                    double custoManut = Double.parseDouble(scanner.nextLine().replace(",", "."));
 
-                    LocalDate novaData = null;
-                    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                    while (novaData == null) {
-                        System.out.print("Nova Data de Nascimento (DD/MM/AAAA): ");
-                        try {
-                            novaData = LocalDate.parse(scanner.nextLine(), fmt);
-                        } catch (DateTimeParseException e) {
-                            System.out.println("❌ Formato inválido!");
-                        }
-                    }
-
-                    Aluno alunoAtualizado = new Aluno(cpfAtualizar, novoNome, novaData);
-                    alunoDAO.atualizar(alunoAtualizado);
+                    Equipamento eqRef = new Equipamento(idEq, null, null, 0, null);
+                    manDAO.salvar(new Manutencao(0, eqRef, LocalDate.now(), custoManut));
                     break;
 
                 case 4:
-                    System.out.print("Digite o CPF do aluno a ser removido: ");
-                    String cpfRemover = scanner.nextLine();
-                    alunoDAO.deletar(cpfRemover);
-                    break;
+                    // A MÁGICA ACONTECE AQUI: Reunindo os dados de todas as tabelas
+                    System.out.println("\n=================================================");
+                    System.out.println("      📊 PAINEL FINANCEIRO GERAL (DASHBOARD)     ");
+                    System.out.println("=================================================");
 
-                case 0: break;
-                default: System.out.println("⚠️ Opção inválida!");
-            }
-        } while (opcao != 0);
-    }
+                    double receitas = pagDAO.somarReceitasTotais();
+                    double custosManutencao = manDAO.somarCustosManutencao();
+                    double despesasExternas = servDAO.somarDespesasExternas();
 
-    // --- FLUXO 2: CRUD DE FUNCIONÁRIOS ---
-    private static void menuFuncionarios(Scanner scanner, FuncionarioDAO funcionarioDAO) {
-        int opcao = -1;
-        do {
-            System.out.println("\n--- GERENCIAR FUNCIONÁRIOS ---");
-            System.out.println("1. Cadastrar Funcionário");
-            System.out.println("2. Listar Funcionários");
-            System.out.println("3. Desligar Funcionário");
-            System.out.println("0. Voltar");
-            System.out.print("Escolha: ");
-
-            try { opcao = scanner.nextInt(); scanner.nextLine(); }
-            catch (Exception e) { scanner.nextLine(); continue; }
-
-            switch (opcao) {
-                case 1:
-                    System.out.print("Cargo (ex: Instrutor, Limpeza): ");
-                    String cargo = scanner.nextLine();
-                    System.out.print("Salário: ");
-                    double salario = Double.parseDouble(scanner.nextLine().replace(",", "."));
-                    System.out.print("Pontos de Acesso (ex: Todas as salas): ");
-                    String pontos = scanner.nextLine();
-                    System.out.print("Delegações (ex: Musculação período noturno): ");
-                    String delegacoes = scanner.nextLine();
-
-                    Funcionario f = new Funcionario(0, cargo, salario, pontos, delegacoes);
-                    funcionarioDAO.salvar(f);
-                    break;
-                case 2:
-                    System.out.println("\n--- LISTA DE FUNCIONÁRIOS ---");
-                    for (Funcionario func : funcionarioDAO.listarTodos()) {
-                        System.out.println("ID: " + func.getIdFuncionario() + " | Cargo: " + func.getCargo() + " | Salário: R$" + func.getSalario());
+                    // Calculando a folha salarial da equipe via Java
+                    double salarios = 0;
+                    for (Funcionario f : funcDAO.listarTodos()) {
+                        salarios += f.getSalario();
                     }
-                    break;
-                case 3:
-                    System.out.print("Digite o ID do funcionário a ser desligado: ");
-                    int idRemover = scanner.nextInt();
-                    funcionarioDAO.deletar(idRemover);
-                    break;
-            }
-        } while (opcao != 0);
-    }
 
-    // --- FLUXO 3: CRUD DE SALAS ---
-    private static void menuSalas(Scanner scanner, SalaDAO salaDAO) {
-        int opcao = -1;
-        do {
-            System.out.println("\n--- GERENCIAR SALAS ---");
-            System.out.println("1. Registrar Nova Sala");
-            System.out.println("2. Listar Salas Existentes");
-            System.out.println("0. Voltar");
-            System.out.print("Escolha: ");
+                    double totalDespesas = custosManutencao + despesasExternas + salarios;
+                    double saldo = receitas - totalDespesas;
 
-            try { opcao = scanner.nextInt(); scanner.nextLine(); }
-            catch (Exception e) { scanner.nextLine(); continue; }
+                    System.out.println("💰 RECEITAS:");
+                    System.out.println("   + Mensalidades Pagas:           R$ " + String.format("%.2f", receitas));
 
-            switch (opcao) {
-                case 1:
-                    System.out.print("Número da Sala: ");
-                    int numero = scanner.nextInt(); scanner.nextLine();
-                    System.out.print("Tipo da Sala (ex: Pilates, Dança): ");
-                    String tipo = scanner.nextLine();
-                    System.out.print("Capacidade Máxima: ");
-                    int cap = scanner.nextInt(); scanner.nextLine();
+                    System.out.println("\n💸 DESPESAS:");
+                    System.out.println("   - Folha Salarial (Funcionários):R$ " + String.format("%.2f", salarios));
+                    System.out.println("   - Manutenção de Equipamentos:   R$ " + String.format("%.2f", custosManutencao));
+                    System.out.println("   - Serviços Externos / Contas:   R$ " + String.format("%.2f", despesasExternas));
+                    System.out.println("   ----------------------------------------------");
+                    System.out.println("   TOTAL DE CUSTOS OPERACIONAIS:   R$ " + String.format("%.2f", totalDespesas));
 
-                    Sala sala = new Sala(numero, tipo, cap);
-                    salaDAO.salvar(sala);
-                    break;
-                case 2:
-                    System.out.println("\n--- LISTA DE SALAS ---");
-                    for (Sala s : salaDAO.listarTodas()) {
-                        System.out.println("Sala " + s.getNumeroSala() + " | Tipo: " + s.getTipoSala() + " | Capacidade: " + s.getCapacidadeMaxima() + " pessoas");
-                    }
+                    System.out.println("\n📈 RESULTADO FINAL (LUCRO/PREJUÍZO): R$ " + String.format("%.2f", saldo));
+                    System.out.println("=================================================");
                     break;
             }
-        } while (opcao != 0);
+        } while (op != 0);
     }
 }
