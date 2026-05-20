@@ -9,7 +9,6 @@ import java.sql.SQLException;
 
 public class InstrutorDAO {
 
-    // Insere um novo instrutor no banco de dados
     public void salvar(Instrutor instrutor) {
         String sql = "INSERT INTO instrutor (nome, cpf, telefone, especialidade, horarios_trabalho) VALUES (?, ?, ?, ?, ?)";
         Connection conn = null;
@@ -26,7 +25,7 @@ public class InstrutorDAO {
             stmt.setString(5, instrutor.getHorariosTrabalho());
 
             stmt.executeUpdate();
-            System.out.println("Instrutor salvo com sucesso!");
+            System.out.println("Instrutor guardado com sucesso!");
         } catch (SQLException e) {
             System.out.println("Erro ao salvar instrutor: " + e.getMessage());
         } finally {
@@ -34,9 +33,9 @@ public class InstrutorDAO {
         }
     }
 
-    // Busca um instrutor por ID (necessário para vincular à criação de Aulas)
-    public Instrutor buscarPorId(int id) {
-        String sql = "SELECT * FROM instrutor WHERE id = ?";
+    // Método adaptado para buscar pela coluna identificadora correta
+    public Instrutor buscarPorId(int idInstrutor) {
+        String sql = "SELECT * FROM instrutor WHERE id_instrutor = ?";
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -44,12 +43,12 @@ public class InstrutorDAO {
         try {
             conn = DatabaseConnection.getConnection();
             stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, id);
+            stmt.setInt(1, idInstrutor);
             rs = stmt.executeQuery();
 
             if (rs.next()) {
                 return new Instrutor(
-                        rs.getInt("id"),
+                        rs.getInt("id_instrutor"),
                         rs.getString("nome"),
                         rs.getString("cpf"),
                         rs.getString("telefone"),

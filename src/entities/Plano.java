@@ -1,17 +1,16 @@
 package entities;
 
 public class Plano {
-    // Atributos privados que representam as colunas da tabela 'plano'
-    private int id;
+
+    private int idPlano;
     private String nome;
     private String descricao;
     private double valorMensal;
     private int duracaoMeses;
     private String beneficios;
 
-    // Construtor completo para instanciar o plano com todos os dados vindos do banco
-    public Plano(int id, String nome, String descricao, double valorMensal, int duracaoMeses, String beneficios) {
-        this.id = id;
+    public Plano(int idPlano, String nome, String descricao, double valorMensal, int duracaoMeses, String beneficios) {
+        this.idPlano = idPlano;
         this.nome = nome;
         this.descricao = descricao;
         this.valorMensal = valorMensal;
@@ -19,13 +18,13 @@ public class Plano {
         this.beneficios = beneficios;
     }
 
-    // Métodos Getters e Setters para leitura e modificação segura dos atributos
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getIdPlano() { return idPlano; }
+    public void setIdPlano(int idPlano) { this.idPlano = idPlano; }
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 
+    // Estes foram os métodos que faltaram e que estavam a quebrar o DAO!
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
 

@@ -132,15 +132,14 @@ public class Main {
 
                 case 2:
                     System.out.println("\n--- LISTA DE ALUNOS CADASTRADOS ---");
-                    // Puxa do banco de dados uma lista completa com todos os alunos já inseridos
                     List<Aluno> lista = alunoDAO.listarTodos();
 
                     if (lista.isEmpty()) {
                         System.out.println("Nenhum aluno cadastrado no banco de dados.");
                     } else {
-                        // O laço 'for' passa por cada aluno da lista e imprime os dados principais na tela
                         for (Aluno a : lista) {
-                            System.out.println("ID: " + a.getId() + " | Nome: " + a.getNome() + " | CPF: " + a.getCpf());
+                            // CORRIGIDO AQUI: a.getIdAluno() em vez de a.getId()
+                            System.out.println("ID: " + a.getIdAluno() + " | Nome: " + a.getNome() + " | CPF: " + a.getCpf());
                         }
                     }
                     break;
