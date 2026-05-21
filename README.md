@@ -1,4 +1,3 @@
-````md id="rvm4xg"
 # 🏋️ Gym Manager
 
 ![Java](https://img.shields.io/badge/Java-17-orange)
@@ -434,4 +433,3 @@ Escolha uma opção:
 # 📄 Licença
 
 Este projeto foi desenvolvido para fins acadêmicos.
-````
